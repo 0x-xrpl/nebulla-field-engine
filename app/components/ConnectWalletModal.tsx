@@ -5,6 +5,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Globe, Wallet, QrCode, X } from 'lucide-react';
 import { useWallet } from './WalletContext';
 
+const formatAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+
 interface ConnectWalletModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -13,6 +15,9 @@ interface ConnectWalletModalProps {
   onSelectWalletConnect: () => Promise<void> | void;
   error?: string | null;
   clearError?: () => void;
+  isConnected?: boolean;
+  connectedAddress?: string | null;
+  onDisconnect?: () => void;
 }
 
 const ConnectWalletModalContent: React.FC<ConnectWalletModalProps> = ({
@@ -23,6 +28,9 @@ const ConnectWalletModalContent: React.FC<ConnectWalletModalProps> = ({
   onSelectWalletConnect,
   error,
   clearError,
+  isConnected,
+  connectedAddress,
+  onDisconnect,
 }) => {
   const handleClose = () => {
     clearError?.();
@@ -64,6 +72,23 @@ const ConnectWalletModalContent: React.FC<ConnectWalletModalProps> = ({
             {error && (
               <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
                 {error}
+              </div>
+            )}
+            {isConnected && connectedAddress && (
+              <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/5 px-4 py-3 text-sm text-white/80 space-y-2">
+                <p className="font-data tracking-[0.3em] text-[0.65rem] text-white/60 uppercase">
+                  Connected as {formatAddress(connectedAddress)}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onDisconnect?.();
+                    handleClose();
+                  }}
+                  className="w-full rounded-xl border border-emerald-400/40 bg-emerald-400/10 py-2 text-xs font-data tracking-[0.35em] text-emerald-200 hover:border-red-400/60 hover:text-red-200 transition-colors"
+                >
+                  Disconnect Wallet
+                </button>
               </div>
             )}
 
@@ -138,6 +163,9 @@ const ConnectWalletModal = () => {
     connectWithWalletConnect,
     error,
     clearError,
+    isConnected,
+    address,
+    disconnect,
   } = useWallet();
 
   return (
@@ -149,6 +177,9 @@ const ConnectWalletModal = () => {
       onSelectWalletConnect={connectWithWalletConnect}
       error={error}
       clearError={clearError}
+      isConnected={isConnected}
+      connectedAddress={address}
+      onDisconnect={disconnect}
     />
   );
 };

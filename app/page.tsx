@@ -72,13 +72,23 @@ const INTENT_PRESETS = [
   'Score validator quorum resilience after proposed governance fork.',
 ];
 
-const MOCK_FEED_DATA = [
-  { address: '0x7a89...8f2b', type: 'Swap Intent', score: 4.8, time: 5 },
-  { address: '0x1c34...c4d0', type: 'Liquidity Rebalance', score: 4.9, time: 7 },
-  { address: '0x9e01...a2f7', type: 'Governance Vote', score: 4.7, time: 12 },
-  { address: '0x3f5b...d8e1', type: 'Risk Hedge Protocol', score: 4.9, time: 18 },
-  { address: '0x5d2a...b6c9', type: 'Cross-Chain Bridge', score: 4.6, time: 24 },
-  { address: '0x6e7c...f3a4', type: 'Lending Pool Deposit', score: 4.8, time: 30 },
+type FeedEntry = {
+  address: string;
+  type: string;
+  label?: string;
+  score?: number;
+  time?: number;
+  timestamp?: string;
+  txHash?: string;
+};
+
+const MOCK_FEED_DATA: FeedEntry[] = [
+  { address: '0x7a89...8f2b', type: 'Swap Intent', score: 4.8, time: 5, label: 'Swapped Somnia assets' },
+  { address: '0x1c34...c4d0', type: 'Liquidity Rebalance', score: 4.9, time: 7, label: 'Rebalanced governance LP' },
+  { address: '0x9e01...a2f7', type: 'Governance Vote', score: 4.7, time: 12, label: 'Voted on Proposal 12' },
+  { address: '0x3f5b...d8e1', type: 'Risk Hedge Protocol', score: 4.9, time: 18, label: 'Hedged Somnia stake' },
+  { address: '0x5d2a...b6c9', type: 'Cross-Chain Bridge', score: 4.6, time: 24, label: 'Bridged to Somnia layer' },
+  { address: '0x6e7c...f3a4', type: 'Lending Pool Deposit', score: 4.8, time: 30, label: 'Deposited into Somnia pool' },
 ];
 
 const MOCK_DNA_ATTRIBUTES = [
@@ -354,7 +364,6 @@ const Header: React.FC = () => {
             {isConnected && address ? formatAddress(address) : 'CONNECT WALLET'}
           </span>
         </motion.button>
-
         <button
           className="min-[1250px]:hidden text-white/90 hover:text-emerald-400 transition-colors z-50"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -942,7 +951,24 @@ const CreatureStatePanel: React.FC<CreatureStatePanelProps> = ({ intentActive, i
   );
 };
 
-const SomniaNativeFeed: React.FC = () => {
+const formatTimestamp = (value?: string, fallbackMinutes?: number) => {
+  if (value) {
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) {
+      return date.toLocaleString();
+    }
+  }
+  if (typeof fallbackMinutes === 'number') {
+    return `${fallbackMinutes} mins ago`;
+  }
+  return 'Just now';
+};
+
+const SomniaNativeFeed: React.FC<{
+  entries: FeedEntry[];
+  loading: boolean;
+  sourceAddress?: string;
+}> = ({ entries, loading, sourceAddress }) => {
   const feedRef = useRef<HTMLDivElement | null>(null);
   const isInView = useInView(feedRef, { once: true, amount: 0.1 });
 
@@ -959,34 +985,57 @@ const SomniaNativeFeed: React.FC = () => {
         <h3 className="text-base md:text-lg font-data text-white flex items-center gap-3 tracking-widest uppercase font-medium">
           <Code size={20} className="text-amber-400" /> SOMNIA NATIVE FEED
         </h3>
-        <a href="#export-json" className="text-xs text-gray-500 hover:text-white flex items-center gap-1 font-body font-medium group transition-colors">
-          EXPORT JSON <ArrowRight size={14} className="text-emerald-400 group-hover:translate-x-1 transition-transform" />
-        </a>
+        <div className="text-right flex flex-col items-end gap-1">
+          {sourceAddress && (
+            <p className="text-[0.55rem] font-data tracking-[0.35em] text-white/50 uppercase">
+              {formatAddress(sourceAddress)}
+            </p>
+          )}
+          <a href="#export-json" className="text-xs text-gray-500 hover:text-white flex items-center gap-1 font-body font-medium group transition-colors">
+            EXPORT JSON <ArrowRight size={14} className="text-emerald-400 group-hover:translate-x-1 transition-transform" />
+          </a>
+        </div>
       </div>
       <div className="space-y-0 flex-1 overflow-y-auto custom-scrollbar-zenith">
-        {MOCK_FEED_DATA.map((item, i) => (
-          <motion.div
-            key={item.address}
-            className="flex items-center justify-between py-4 border-b border-white/5 last:border-0 group hover:bg-white/10 px-4 -mx-4 rounded-lg transition-colors cursor-pointer"
-            initial={{ opacity: 0, x: -10 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ delay: i * 0.05 }}
-          >
-            <div className="flex items-center gap-4">
-              <div className={`w-1 h-8 rounded-full ${i % 3 === 0 ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-              <div className="flex flex-col tracking-tighter">
-                <span className="text-sm text-gray-300 group-hover:text-white font-data font-semibold tracking-tighter">{item.address}</span>
-                <span className="text-xs text-gray-600 font-body tracking-tight">
-                  {item.type} • {item.time} mins ago
-                </span>
+        {loading && (
+          <div className="flex items-center justify-center py-6 text-xs text-white/60 font-data tracking-[0.35em]">
+            <Loader className="mr-2 h-4 w-4 animate-spin text-emerald-400" /> FETCHING INTENT FEED
+          </div>
+        )}
+        {!loading &&
+          entries.map((item, i) => (
+            <motion.div
+              key={`${item.txHash ?? item.address}-${i}`}
+              className="flex items-center justify-between py-4 border-b border-white/5 last:border-0 group hover:bg-white/10 px-4 -mx-4 rounded-lg transition-colors cursor-pointer"
+              initial={{ opacity: 0, x: -10 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
+              transition={{ delay: i * 0.05 }}
+            >
+              <div className="flex items-center gap-4">
+                <div className={`w-1 h-8 rounded-full ${i % 3 === 0 ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                <div className="flex flex-col tracking-tighter">
+                  <span className="text-sm text-gray-300 group-hover:text-white font-data font-semibold tracking-tighter">
+                    {item.address}
+                  </span>
+                  <span className="text-xs text-gray-600 font-body tracking-tight">
+                    {(item.label ?? item.type)?.toUpperCase()} • {formatTimestamp(item.timestamp, item.time)}
+                  </span>
+                </div>
               </div>
-            </div>
-            <div className="text-right hidden sm:block">
-              <span className="text-sm font-body-mono-score font-bold text-emerald-400 tracking-normal">Score: {item.score.toFixed(1)}</span>
-            </div>
-          </motion.div>
-        ))}
+              <div className="text-right hidden sm:block">
+                {typeof item.score === 'number' ? (
+                  <span className="text-sm font-body-mono-score font-bold text-emerald-400 tracking-normal">
+                    Score: {item.score.toFixed(1)}
+                  </span>
+                ) : (
+                  <span className="text-sm font-body-mono-score font-bold text-white/60 tracking-normal">
+                    LIVE
+                  </span>
+                )}
+              </div>
+            </motion.div>
+          ))}
       </div>
     </motion.div>
   );
@@ -1042,6 +1091,9 @@ export default function App() {
   const [emitError, setEmitError] = useState('');
   const [waveScore, setWaveScore] = useState<number | null>(null);
   const [intentResult, setIntentResult] = useState<IntentResult | null>(null);
+  const [feedItems, setFeedItems] = useState<FeedEntry[]>(MOCK_FEED_DATA);
+  const [feedLoading, setFeedLoading] = useState(false);
+  const [feedSource, setFeedSource] = useState<string>('');
 
   const scrollY = useParallaxScroll();
   const { address: connectedAddress } = useWallet();
@@ -1053,6 +1105,57 @@ export default function App() {
       setWalletAddress('');
     }
   }, [connectedAddress]);
+
+  useEffect(() => {
+    const target = walletAddress.trim();
+    if (!target || !target.startsWith('0x') || target.length < 6) {
+      setFeedSource('');
+      setFeedItems(MOCK_FEED_DATA);
+      setFeedLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const handler = setTimeout(() => {
+      (async () => {
+        setFeedLoading(true);
+        try {
+          const response = await fetch('/api/intent-demo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ address: target }),
+          });
+          if (!response.ok) throw new Error('Failed to load feed');
+          const data = await response.json();
+          if (cancelled) return;
+          const normalized: FeedEntry[] = (data.intents || []).map((item: any, index: number) => ({
+            address: (data.address as string) || target,
+            type: item.type || 'ACTION',
+            label: item.label || `Intent ${index + 1}`,
+            timestamp: item.time,
+            txHash: item.txHash,
+            score: typeof data.score === 'number' ? data.score : undefined,
+          }));
+          setFeedItems(normalized.length ? normalized : MOCK_FEED_DATA);
+          setFeedSource((data.address as string) || target);
+        } catch (error) {
+          if (!cancelled) {
+            setFeedItems(MOCK_FEED_DATA);
+            setFeedSource('');
+          }
+        } finally {
+          if (!cancelled) {
+            setFeedLoading(false);
+          }
+        }
+      })();
+    }, 500);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(handler);
+    };
+  }, [walletAddress]);
 
   const handleEmit = () => {
     const wallet = walletAddress.trim();
@@ -1233,7 +1336,7 @@ export default function App() {
 
             {/* Row 3 (Feed & Placeholder) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <SomniaNativeFeed />
+              <SomniaNativeFeed entries={feedItems} loading={feedLoading} sourceAddress={feedSource} />
               <PlaceholderPanel />
             </div>
           </div>
