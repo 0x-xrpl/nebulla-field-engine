@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Code, Cpu, Layers, Loader, ShieldCheck, Target, Wallet, Zap, Menu, X } from 'lucide-react';
 import { AnimatePresence, motion, useAnimation, useInView } from 'framer-motion';
 import { useWallet } from './components/WalletContext';
@@ -713,18 +713,20 @@ const HolomapPanel: React.FC<HolomapPanelProps> = ({ intentResult, intentMetrics
   const isInViewRef = useRef<HTMLDivElement | null>(null);
   const isInView = useInView(isInViewRef, { once: true, amount: 0.5 });
   const scrollY = useParallaxScroll();
+  const [particles, setParticles] = useState<
+    { id: number; x: number; y: number; z: number; delay: number }[]
+  >([]);
 
-  const particles = useMemo(
-    () =>
-      Array.from({ length: 35 }).map(() => ({
-        id: Math.random(),
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        z: Math.random() * 100,
-        delay: Math.random() * 10,
-      })),
-    []
-  );
+  useEffect(() => {
+    const generatedParticles = Array.from({ length: 35 }).map(() => ({
+      id: Math.random(),
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      z: Math.random() * 100,
+      delay: Math.random() * 10,
+    }));
+    setParticles(generatedParticles);
+  }, []);
 
   return (
     <motion.div
