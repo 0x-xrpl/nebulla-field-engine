@@ -7,3 +7,7 @@ yarn-error.log*
 .DS_Store
 *.zip
 *.zip
+
+# ZIP バックアップは Git に入れない
+*.zip
+
