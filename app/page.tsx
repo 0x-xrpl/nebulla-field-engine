@@ -218,29 +218,52 @@ const AbstractNoiseField: React.FC<{ active: boolean }> = ({ active }) => {
       <motion.div
         className="absolute inset-0"
         style={{
-          y: scrollY * 0.15,
-          filter: 'blur(100px)',
+          y: scrollY * 0.08,
+          filter: 'blur(110px)',
         }}
         animate={{
           rotate: 360,
-          x: ['-5%', '5%'],
-          scale: active ? 1.3 : 1.1,
+          x: ['-3%', '3%'],
+          scale: active ? 1.25 : 1.05,
         }}
-        transition={{ repeat: Infinity, duration: active ? 30 : 60, ease: 'linear' }}
+        transition={{ repeat: Infinity, duration: active ? 40 : 70, ease: 'linear' }}
       >
         <motion.div
-          className="absolute w-64 h-64 rounded-full -top-10 -left-10"
+          className="absolute w-72 h-72 rounded-full top-10 left-[-5%]"
           style={{ background: THEME.colors.primary }}
-          animate={{ x: ['0%', '100%'], y: ['0%', '100%'] }}
-          transition={{ repeat: Infinity, duration: 25, ease: 'easeInOut', repeatType: 'reverse' }}
+          animate={{ x: ['-5%', '10%'], y: ['-5%', '15%'] }}
+          transition={{ repeat: Infinity, duration: 28, ease: 'easeInOut', repeatType: 'reverse' }}
         />
         <motion.div
-          className="absolute w-96 h-96 rounded-full bottom-0 right-0"
-          style={{ background: THEME.colors.accent }}
-          animate={{ x: ['0%', '-100%'], y: ['0%', '-100%'] }}
-          transition={{ repeat: Infinity, duration: 35, ease: 'easeInOut', repeatType: 'reverse' }}
+          className="absolute rounded-full"
+          style={{
+            width: '85vmin',
+            height: '85vmin',
+            right: '-12vmin',
+            top: '15vh',
+            background: 'radial-gradient(circle, rgba(245,158,11,0.55) 0%, rgba(245,158,11,0.25) 35%, transparent 70%)',
+            opacity: active ? 0.55 : 0.38,
+          }}
+          animate={{ rotate: [0, 360], scale: active ? [1.05, 1.15, 1.05] : [1, 1.05, 1], y: ['-5%', '5%'] }}
+          transition={{ repeat: Infinity, duration: 55, ease: 'linear' }}
         />
       </motion.div>
+
+      <motion.div
+        className="absolute pointer-events-none"
+        style={{
+          width: '120vmin',
+          height: '120vmin',
+          right: '-20vmin',
+          top: '10vh',
+          opacity: active ? 0.4 : 0.25,
+          background: 'radial-gradient(circle at 30% 40%, rgba(245,158,11,0.3), transparent 65%)',
+          filter: 'blur(35px)',
+          y: scrollY * 0.03,
+        }}
+        animate={{ rotate: [0, 360] }}
+        transition={{ repeat: Infinity, duration: 80, ease: 'linear' }}
+      />
 
       <AnimatePresence>
         {active && (
@@ -258,11 +281,13 @@ const AbstractNoiseField: React.FC<{ active: boolean }> = ({ active }) => {
   );
 };
 
+const formatAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+
 const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const controls = useAnimation();
-  const { openWalletModal } = useWallet();
+  const { openWalletModal, isConnected, address } = useWallet();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -311,7 +336,11 @@ const Header: React.FC = () => {
       <div className="flex items-center gap-4 absolute right-4 md:right-12">
         <motion.button
           onClick={openWalletModal}
-          className="relative overflow-hidden flex items-center gap-2 px-4 sm:px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-xs font-medium text-white transition-all hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] font-body uppercase tracking-wider group"
+          className={`relative overflow-hidden flex items-center gap-2 px-4 sm:px-6 py-2.5 border rounded-full text-xs font-medium transition-all font-body uppercase tracking-wider group ${
+            isConnected
+              ? 'bg-emerald-500/10 border-emerald-400/60 text-white shadow-[0_0_25px_rgba(16,185,129,0.35)]'
+              : 'bg-white/5 hover:bg-white/10 border-white/10 text-white hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]'
+          }`}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -321,7 +350,9 @@ const Header: React.FC = () => {
             transition={{ duration: 2.5, repeat: Infinity, ease: 'linear' }}
           />
           <Wallet size={14} className="text-emerald-400 z-10" />
-          <span className="z-10 hidden sm:inline">CONNECT WALLET</span>
+          <span className="z-10 hidden sm:inline">
+            {isConnected && address ? formatAddress(address) : 'CONNECT WALLET'}
+          </span>
         </motion.button>
 
         <button
@@ -1013,6 +1044,15 @@ export default function App() {
   const [intentResult, setIntentResult] = useState<IntentResult | null>(null);
 
   const scrollY = useParallaxScroll();
+  const { address: connectedAddress } = useWallet();
+
+  useEffect(() => {
+    if (connectedAddress) {
+      setWalletAddress(connectedAddress);
+    } else {
+      setWalletAddress('');
+    }
+  }, [connectedAddress]);
 
   const handleEmit = () => {
     const wallet = walletAddress.trim();
