@@ -1014,14 +1014,6 @@ export default function App() {
 
   const scrollY = useParallaxScroll();
 
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-  if (!isMounted) {
-    return null;
-  }
-
   const handleEmit = () => {
     const wallet = walletAddress.trim();
     const text = inputIntent.trim();
