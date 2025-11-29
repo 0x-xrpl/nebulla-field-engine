@@ -1,7 +1,7 @@
-# Nebulla Field — Somnia Native Intent Engine
+# Nebula Field — Somnia Native Intent Engine
 ### A native real-time intent layer for the Somnia ecosystem.
 
-Nebulla Field is a Somnia-native, real-time intent engine that transforms wallet activity into a living **Intent Field**.
+Nebula Field is a Somnia-native, real-time intent engine that transforms wallet activity into a living **Intent Field**.
 
 Connect a wallet → observe the Intent Score, latest actions, and behavioral phase  
 (**Predict / Synchronize / Awaiting**) in a single, carefully crafted Nebula-style screen.
@@ -11,9 +11,9 @@ You can copy / paste it (and the requirement sections) into an AI code assistant
 
 ---
 
-## 0. Vision — “Nebulla Field”
+## 0. Vision — “Nebula Field”
 
-**Nebulla Field** is designed to be a reference implementation of a:
+**Nebula Field** is designed to be a reference implementation of a:
 
 > Somnia-native, real-time Intent Layer  
 > with premium UI and minimal cognitive load.
@@ -25,7 +25,7 @@ Goals:
 - High-end Nebula glass UI (no “cheap” dashboard feeling)
 - Clean engine separation for future S1 → G1 → S3 evolution
 
-Nebulla Field is not just a dashboard; it is an **engine** that can power  
+Nebula Field is not just a dashboard; it is an **engine** that can power  
 future Somnia-native analytics, risk models, and social intent graphs.
 
 ---
@@ -34,7 +34,7 @@ future Somnia-native analytics, risk models, and social intent graphs.
 
 ### 1.1 Wallet-Centric Flow
 
-Nebulla Field starts from the wallet:
+Nebula Field starts from the wallet:
 
 - **Connect Wallet** header button
 - Nebula-style **Connect Modal** with:
@@ -88,7 +88,7 @@ All three cards must react to:
 
 ### 1.3 Real-Time Intent Engine (S1)
 
-For the hackathon version (S1 phase):
+For the Demo version (S1 phase):
 
 - `/api/intent/analyze` receives:
   - `address` (0x string)
